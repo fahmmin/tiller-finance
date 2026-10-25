@@ -68,9 +68,8 @@ p { margin: 0; }
 .hero-title { font-weight: 600; font-size: clamp(2.6rem, 6.4vw, 5.6rem); line-height: 1.04; letter-spacing: -0.045em; max-width: 15ch; }
 .br-desk { display: none; }
 @media (min-width: 1000px) { .hero-title { max-width: none; } .br-desk { display: inline; } }
-.chip { display: inline-flex; align-items: center; gap: 0.12em; vertical-align: middle; background: var(--teal); border-radius: 999px; padding: 0.08em 0.28em 0.08em 0.1em; height: 0.92em; transform: translateY(-0.06em); }
-.chip b { display: grid; place-items: center; width: 0.74em; height: 0.74em; border-radius: 50%; background: var(--lime); color: var(--teal); font-size: 0.62em; box-shadow: 0 0 0 0.09em rgba(158, 252, 101, 0.35); }
-.chip em { font-style: normal; color: var(--white); font-size: 0.5em; letter-spacing: -0.12em; }
+.chip { display: inline-flex; vertical-align: middle; transform: translateY(-0.06em); }
+.chip-svg { height: 0.86em; width: auto; display: block; }
 .hero-sub { max-width: 46ch; font-size: clamp(1rem, 1.6vw, 1.2rem); color: var(--ink-2); line-height: 1.7; }
 .hl { padding: 3px 8px; border-radius: 8px; color: var(--ink); }
 .hl.pink { background: var(--pink); }
@@ -315,3 +314,7 @@ p { margin: 0; }
 .numbers-row sup { font-size: 0.4em; }
 .hero-sub { max-width: 52ch; }
 .position-card .cta { align-self: flex-start; }
+
+/* the two "why" blocks now sit together right under the hero */
+.hero + * + .pov, .pov { margin-top: 16px; }
+.pov + * + .versus, .versus { margin-top: 16px; }

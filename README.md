@@ -144,7 +144,7 @@ Each run, the keeper sends Claude (Opus 5.5) a structured snapshot: BTC price, M
 |---|---|
 | [`contracts/`](contracts) | `TillerVault.sol`, `DrillPool.sol`, Mezo interfaces, mocks, tests, deploy/drill/deposit scripts |
 | [`keeper/`](keeper) | TypeScript keeper: snapshot, rule planner, Claude review, executor |
-| [`app/`](app) | Vite + React + viem site: landing page and vault app, deployed on Cloudflare |
+| [`app/`](app) | Vite + React + viem site on Cloudflare: landing page, plus a multi-page vault app (Overview, Earn, Peg monitor, Activity, Risk & contracts) with wallet connect, network switching and transaction toasts |
 | [`docs/`](docs) | [PRD](docs/PRD.md), [design](docs/superpowers/specs/2026-10-25-tiller-finance-design.md), [Mezo reference](docs/mezo-reference.md), [composability map](docs/composability.md), [competition notes](docs/competition-wave1.md) |
 
 ## Run it yourself

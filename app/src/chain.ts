@@ -5,6 +5,7 @@ declare const __DEPLOYMENT__: {
   DrillPool?: `0x${string}`;
   deployBlock?: number;
   previousVaults?: { address: `0x${string}`; deployBlock: number }[];
+  keeper?: `0x${string}`;
 };
 
 export const mezoTestnet = defineChain({
@@ -58,3 +59,16 @@ export const pub = createPublicClient({ chain: mezoTestnet, transport: http() })
 
 export const fmt = (x: bigint | undefined, dp = 2) =>
   x === undefined ? "–" : (Number(x) / 1e18).toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp });
+
+export const KEEPER = __DEPLOYMENT__.keeper;
+export const DRILL_POOL = __DEPLOYMENT__.DrillPool;
+
+// Mezo testnet contracts the vault calls (docs/mezo-reference.md)
+export const MEZO_CONTRACTS = [
+  { name: "MUSD", address: MUSD },
+  { name: "Stability Pool", address: "0x1CCA7E410eE41739792eA0A24e00349Dd247680e" },
+  { name: "Trove Manager", address: "0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0" },
+  { name: "Hint Helpers", address: "0x4e4cBA3779d56386ED43631b4dCD6d8EacEcBCF6" },
+  { name: "Price Feed", address: PRICE_FEED },
+  { name: "Mezo Pools MUSD/BTC", address: "0xd16A5Df82120ED8D626a1a15232bFcE2366d6AA9" },
+] as const;

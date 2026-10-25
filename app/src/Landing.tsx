@@ -84,7 +84,7 @@ export default function Landing() {
         </div>
         <h1 className="hero-title">
           <span className="w">What</span> <span className="w">if</span> <span className="w">your</span>{" "}
-          <span className="chip w" aria-hidden="true"><b>$</b><em>›››</em></span>{" "}
+          <span className="chip w" aria-hidden="true"><DollarChip /></span>{" "}
           <span className="w">dollars</span> <br className="br-desk" />
           <span className="w">defended</span> <span className="w">their</span> <span className="w">own</span> <span className="w">peg?</span>
         </h1>
@@ -94,10 +94,73 @@ export default function Landing() {
           <mark className="hl black">an AI check</mark> on every move.
         </p>
         <div className="hero-ctas">
-          <CtaLink href="/app">Deposit MUSD</CtaLink>
+          <CtaLink href="/app/earn">Deposit MUSD</CtaLink>
           <CtaLink href="#yield" ghost>How does it earn?</CtaLink>
           <CtaLink href={GITHUB} ghost>Read the code</CtaLink>
         </div>
+      </section>
+
+      <section className="dark-block pov" id="why">
+        <Tag dark>Why this exists</Tag>
+        <p className="statement">
+          A stablecoin's floor is only as strong as the people willing to buy it back.{" "}
+          <span className="lime-text">Tiller turns every MUSD holder into one of them</span>, with limits the code enforces and
+          reasons anyone can read.
+        </p>
+        <div className="pov-foot">
+          <div className="pov-badges" aria-hidden="true"><i>₿</i><i>$</i><i>AI</i><i>✓</i></div>
+          <p>
+            On Mezo mainnet, MUSD traded at ${PROOF.mainnetMusd} on Oct 25, 2026, right at the 0.75% redemption floor. That floor
+            only holds if someone runs the trade. Today that's people with their own bots.
+          </p>
+        </div>
+
+        <div className="parts" id="how">
+          <div className="parts-list">
+            <Tag dark>Four parts, one vault</Tag>
+            <h2>Where does your MUSD work?</h2>
+            <ol>
+              {PARTS.map((p, i) => (
+                <li key={p.name}>
+                  <button className={open === i ? "open" : ""} onClick={() => setOpen(i)} aria-expanded={open === i}>
+                    <span className="idx">{String(i + 1).padStart(2, "0")}</span>
+                    {p.name}
+                  </button>
+                  {open === i && <p>{p.body}</p>}
+                </li>
+              ))}
+            </ol>
+          </div>
+          <div className="parts-panel">
+            <PartFigure index={open} />
+            <span className="panel-kicker">{PARTS[open].name}</span>
+            <strong>{PARTS[open].stat}</strong>
+            <span>{PARTS[open].statLabel}</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="dark-block versus" id="safety">
+        <Tag dark>Why hold MUSD here</Tag>
+        <h2 className="center">Same MUSD. Different math.</h2>
+        <div className="vs">
+          <div className="vs-head muted-head">Doing it yourself</div>
+          <span className="vs-mid">VS</span>
+          <div className="vs-head lime-head"><Logo /></div>
+          <ul className="vs-list no">
+            <li>Idle MUSD earns nothing between depegs</li>
+            <li>Peg trades need your own bot, hints and timing</li>
+            <li>Liquidation BTC sits unsold until you act</li>
+            <li>No one checks a trade before it runs</li>
+          </ul>
+          <ul className="vs-list yes">
+            <li>Stability Pool yield while MUSD is on peg</li>
+            <li>Peg trades run for you, profit-checked on chain</li>
+            <li>BTC sold back at no worse than oracle minus 1.5%</li>
+            <li>Every move reviewed by Claude and logged with a reason</li>
+          </ul>
+        </div>
+        <SafetyFigures />
       </section>
 
       <section className="hero-cards" aria-label="Live market and first results">
@@ -148,45 +211,6 @@ export default function Landing() {
       <YieldEngines />
       <FollowThousand vault={vault} />
 
-      <section className="dark-block pov" id="why">
-        <Tag dark>Why this exists</Tag>
-        <p className="statement">
-          A stablecoin's floor is only as strong as the people willing to buy it back.{" "}
-          <span className="lime-text">Tiller turns every MUSD holder into one of them</span>, with limits the code enforces and
-          reasons anyone can read.
-        </p>
-        <div className="pov-foot">
-          <div className="pov-badges" aria-hidden="true"><i>₿</i><i>$</i><i>AI</i><i>✓</i></div>
-          <p>
-            On Mezo mainnet, MUSD traded at ${PROOF.mainnetMusd} on Oct 25, 2026, right at the 0.75% redemption floor. That floor
-            only holds if someone runs the trade. Today that's people with their own bots.
-          </p>
-        </div>
-
-        <div className="parts" id="how">
-          <div className="parts-list">
-            <Tag dark>Four parts, one vault</Tag>
-            <h2>Where does your MUSD work?</h2>
-            <ol>
-              {PARTS.map((p, i) => (
-                <li key={p.name}>
-                  <button className={open === i ? "open" : ""} onClick={() => setOpen(i)} aria-expanded={open === i}>
-                    <span className="idx">{String(i + 1).padStart(2, "0")}</span>
-                    {p.name}
-                  </button>
-                  {open === i && <p>{p.body}</p>}
-                </li>
-              ))}
-            </ol>
-          </div>
-          <div className="parts-panel">
-            <PartFigure index={open} />
-            <span className="panel-kicker">{PARTS[open].name}</span>
-            <strong>{PARTS[open].stat}</strong>
-            <span>{PARTS[open].statLabel}</span>
-          </div>
-        </div>
-      </section>
 
       <section className="proof" id="proof">
         <div className="section-head center">
@@ -257,28 +281,6 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="dark-block versus" id="safety">
-        <Tag dark>Why hold MUSD here</Tag>
-        <h2 className="center">Same MUSD. Different math.</h2>
-        <div className="vs">
-          <div className="vs-head muted-head">Doing it yourself</div>
-          <span className="vs-mid">VS</span>
-          <div className="vs-head lime-head"><Logo /></div>
-          <ul className="vs-list no">
-            <li>Idle MUSD earns nothing between depegs</li>
-            <li>Peg trades need your own bot, hints and timing</li>
-            <li>Liquidation BTC sits unsold until you act</li>
-            <li>No one checks a trade before it runs</li>
-          </ul>
-          <ul className="vs-list yes">
-            <li>Stability Pool yield while MUSD is on peg</li>
-            <li>Peg trades run for you, profit-checked on chain</li>
-            <li>BTC sold back at no worse than oracle minus 1.5%</li>
-            <li>Every move reviewed by Claude and logged with a reason</li>
-          </ul>
-        </div>
-        <SafetyFigures />
-      </section>
 
       <BuiltOnMezo />
 
@@ -345,4 +347,18 @@ export default function Landing() {
 function PartFigure({ index }: { index: number }) {
   const Figure = PART_FIGURES[index];
   return <Figure key={index} play intensity={0.6} className="hairline-fig part-fig" label={`Animated figure for ${PARTS[index].name}`} />;
+}
+
+/** The headline chip: a lime dollar coin moving right, drawn as vectors so it stays crisp and centred. */
+function DollarChip() {
+  return (
+    <svg viewBox="0 0 132 64" className="chip-svg">
+      <rect width="132" height="64" rx="32" fill="#122020" />
+      <circle cx="32" cy="32" r="26" fill="#9efc65" opacity="0.28" />
+      <circle cx="32" cy="32" r="21" fill="#9efc65" />
+      <path d="M38.5 24.5c-1.6-2.2-4-3.3-6.8-3.3-3.9 0-6.7 2-6.7 5.1 0 6.6 14 3.6 14 10.5 0 3.3-3 5.5-7.2 5.5-3.1 0-5.8-1.3-7.4-3.6M31.6 17v30"
+        fill="none" stroke="#122020" strokeWidth="4.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M68 24l8 8-8 8M84 24l8 8-8 8M100 24l8 8-8 8" fill="none" stroke="#fff" strokeWidth="4.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
 }
