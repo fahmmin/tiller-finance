@@ -134,6 +134,13 @@ Each run, the keeper sends Claude (Opus 5.5) a structured snapshot: BTC price, M
 - harvests through the pool paying the most MUSD
 - picks the most profitable arb and skips unprofitable ones
 
+**End-to-end with real MetaMask, 1 passing** (`cd e2e && npm test`). Synpress 4 and Playwright drive MetaMask 13 against the live Mezo testnet vault:
+- connect the wallet, and the app adds Mezo Testnet to MetaMask
+- check input validation, approve MUSD, deposit 1 MUSD, withdraw it
+- check the Overview, Activity, Peg monitor and Risk pages
+
+Passed twice in a row on Oct 25, 2026. The deposit and withdrawal are on chain: [deposit](https://explorer.test.mezo.org/tx/0x3bee4d516f2e08d28b71724ded9a05ac360dfd60be88cd6fc053010a9acd4b46), [withdraw](https://explorer.test.mezo.org/tx/0xc5fc1d7c9f6df1dd1cf0ec7254eed4d8807d8287b6aba59cca57bae5af0db57e). On Windows, build the MetaMask cache with `node build-cache.mjs`, because the Synpress CLI only runs on Linux, macOS or WSL; elsewhere use `npx synpress wallet-setup`. The test wallet comes from `E2E_MNEMONIC` in `.env` (testnet only) and is funded by `contracts/scripts/fund.js`.
+
 **Live checks on Mezo testnet:** the peg trade, the Stability Pool deposit, Claude approvals and a Claude veto, the simulate-before-send guard, and receipt checks.
 
 ---
@@ -145,6 +152,7 @@ Each run, the keeper sends Claude (Opus 5.5) a structured snapshot: BTC price, M
 | [`contracts/`](contracts) | `TillerVault.sol`, `DrillPool.sol`, Mezo interfaces, mocks, tests, deploy/drill/deposit scripts |
 | [`keeper/`](keeper) | TypeScript keeper: snapshot, rule planner, Claude review, executor |
 | [`app/`](app) | Vite + React + viem site on Cloudflare: landing page, plus a multi-page vault app (Overview, Earn, Peg monitor, Activity, Risk & contracts) with wallet connect, network switching and transaction toasts |
+| [`e2e/`](e2e) | Synpress + Playwright end-to-end test with real MetaMask on Mezo testnet |
 | [`docs/`](docs) | [PRD](docs/PRD.md), [design](docs/superpowers/specs/2026-10-25-tiller-finance-design.md), [Mezo reference](docs/mezo-reference.md), [composability map](docs/composability.md), [competition notes](docs/competition-wave1.md) |
 
 ## Run it yourself
