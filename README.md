@@ -4,7 +4,7 @@
 
 Tiller is a vault for MUSD, Mezo's Bitcoin-backed dollar. It earns by doing the job that keeps a stablecoin at $1: when MUSD trades cheap, the vault buys it back through Mezo's redemption mechanism and keeps the difference. Between depegs, it backs Mezo's Stability Pool. A rule-based keeper proposes every move, Claude reviews it and can stop it, and every reason is written on-chain.
 
-**Live:** [tillerfinance.xyz](https://tillerfinance.xyz) · **Vault app:** [tillerfinance.xyz/app](https://tillerfinance.xyz/app) · **Network:** Mezo testnet (chain 31611) · **Track:** Track 1, DeFi
+**Live:** [tillerfinance.xyz](https://tillerfinance.xyz) · **Vault app:** [tillerfinance.xyz/app](https://tillerfinance.xyz/app) · **Code:** [github.com/fahmmin/tiller-finance](https://github.com/fahmmin/tiller-finance) · **Network:** Mezo testnet (chain 31611) · **Track:** Track 1, DeFi
 
 ---
 

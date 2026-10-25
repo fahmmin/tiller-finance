@@ -70,6 +70,7 @@ export default function Landing() {
           <a href="#proof">Proof</a>
           <a href="#safety">Safety</a>
           <a href="#roadmap">Roadmap</a>
+          <a href={GITHUB} target="_blank" rel="noreferrer">GitHub</a>
         </nav>
         <CtaLink href="/app">Launch app</CtaLink>
       </header>
@@ -89,6 +90,7 @@ export default function Landing() {
         <div className="hero-ctas">
           <CtaLink href="/app">Deposit MUSD</CtaLink>
           <CtaLink href="#proof" ghost>See the testnet results</CtaLink>
+          <CtaLink href={GITHUB} ghost>Read the code</CtaLink>
         </div>
       </section>
 

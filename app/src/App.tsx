@@ -3,6 +3,7 @@ import { createWalletClient, custom, maxUint256, parseEther, type WalletClient }
 import { EXPLORER, MUSD, VAULT, erc20Abi, fmt, mezoTestnet, pub, vaultAbi } from "./chain";
 import { PegGauge } from "./Gauge";
 import { ACTION_TEXT, useLive } from "./live";
+import { GITHUB } from "./proof";
 import { CtaLink, Logo, Tag } from "./ui";
 
 type Me = { address: `0x${string}`; musd: bigint; shares: bigint; value: bigint };
@@ -87,6 +88,7 @@ export default function App() {
           <a href="/">Overview</a>
           <a href="#log">Log</a>
           {VAULT && <a href={`${EXPLORER}/address/${VAULT}`} target="_blank" rel="noreferrer">Contract</a>}
+          <a href={GITHUB} target="_blank" rel="noreferrer">GitHub</a>
         </nav>
         {me ? <span className="who">{me.address.slice(0, 6)}…{me.address.slice(-4)}</span>
             : <button className="cta" onClick={connect}><span>Connect wallet</span></button>}

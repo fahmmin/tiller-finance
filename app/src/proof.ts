@@ -19,5 +19,4 @@ export const PROOF = {
   wave1Entries: 44,
 };
 
-// Set once the public repo exists; links that need it stay hidden until then.
-export const GITHUB = "";
+export const GITHUB = "https://github.com/fahmmin/tiller-finance";
