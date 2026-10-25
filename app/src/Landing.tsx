@@ -3,7 +3,9 @@ import { EXPLORER, VAULT, fmt } from "./chain";
 import { PegGauge } from "./Gauge";
 import { useLive } from "./live";
 import { GITHUB, PROOF } from "./proof";
-import { CtaLink, Logo, Tag } from "./ui";
+import { Relay } from "@lucasmarkes/hairline/react";
+import { BuiltOnMezo, Faq, FollowThousand, MusdBasics, PART_FIGURES, SafetyFigures, YieldEngines } from "./Explainers";
+import { CtaLink, Logo, MezoBadge, Tag } from "./ui";
 
 const PARTS = [
   {
@@ -66,17 +68,20 @@ export default function Landing() {
       <header className="nav">
         <Logo />
         <nav aria-label="Sections">
-          <a href="#how">How it works</a>
+          <a href="#basics">MUSD 101</a>
+          <a href="#yield">Where yield comes from</a>
           <a href="#proof">Proof</a>
-          <a href="#safety">Safety</a>
-          <a href="#roadmap">Roadmap</a>
+          <a href="#faq">FAQ</a>
           <a href={GITHUB} target="_blank" rel="noreferrer">GitHub</a>
         </nav>
         <CtaLink href="/app">Launch app</CtaLink>
       </header>
 
       <section className="hero">
-        <Tag>Bitcoin-backed savings on Mezo</Tag>
+        <div className="hero-badges">
+          <MezoBadge />
+          <Tag>Savings for Bitcoin-backed dollars</Tag>
+        </div>
         <h1 className="hero-title">
           <span className="w">What</span> <span className="w">if</span> <span className="w">your</span>{" "}
           <span className="chip w" aria-hidden="true"><b>$</b><em>›››</em></span>{" "}
@@ -84,12 +89,13 @@ export default function Landing() {
           <span className="w">defended</span> <span className="w">their</span> <span className="w">own</span> <span className="w">peg?</span>
         </h1>
         <p className="hero-sub">
-          <mark className="hl pink">Peg trades,</mark> <mark className="hl white">Stability Pool yield,</mark> and{" "}
-          <mark className="hl black">AI risk review</mark> in one MUSD vault. Every move is bounded by code and explained on-chain.
+          Put in <mark className="hl white">MUSD</mark>, Mezo's Bitcoin-backed dollar. Tiller grows it by{" "}
+          <mark className="hl pink">buying MUSD on sale</mark> and <mark className="hl lime">backing Mezo's safety fund</mark>, with{" "}
+          <mark className="hl black">an AI check</mark> on every move.
         </p>
         <div className="hero-ctas">
           <CtaLink href="/app">Deposit MUSD</CtaLink>
-          <CtaLink href="#proof" ghost>See the testnet results</CtaLink>
+          <CtaLink href="#yield" ghost>How does it earn?</CtaLink>
           <CtaLink href={GITHUB} ghost>Read the code</CtaLink>
         </div>
       </section>
@@ -129,14 +135,18 @@ export default function Landing() {
       <section className="strip" aria-label="Built with">
         <p>Built on the Mezo stack, reviewed by Claude</p>
         <ul>
-          <li className="wm-1">mezo</li>
-          <li className="wm-2">MUSD</li>
+          <li><img className="strip-logo" src="/brand/mezo-logo-light.svg" alt="Mezo" /></li>
+          <li className="wm-2 with-icon"><img src="/brand/musd.svg" alt="" />MUSD</li>
           <li className="wm-3">Stability Pool</li>
           <li className="wm-4">Mezo Pools</li>
           <li className="wm-5">Claude</li>
           <li className="wm-6">Skip oracle</li>
         </ul>
       </section>
+
+      <MusdBasics />
+      <YieldEngines />
+      <FollowThousand vault={vault} />
 
       <section className="dark-block pov" id="why">
         <Tag dark>Why this exists</Tag>
@@ -170,6 +180,7 @@ export default function Landing() {
             </ol>
           </div>
           <div className="parts-panel">
+            <PartFigure index={open} />
             <span className="panel-kicker">{PARTS[open].name}</span>
             <strong>{PARTS[open].stat}</strong>
             <span>{PARTS[open].statLabel}</span>
@@ -226,6 +237,7 @@ export default function Landing() {
             <h2>How a decision happens.</h2>
             <p>The same loop every run, with a reason written on-chain each time.</p>
           </div>
+          <Relay play intensity={0.55} label="A signal lighting a path hop by hop, like a decision passing three checks" className="hairline-fig loop-fig" />
           <div className="loop-foot">
             <strong>3</strong>
             <span>checks before any MUSD moves: the rules, Claude, and the contract.</span>
@@ -265,7 +277,10 @@ export default function Landing() {
             <li>Every move reviewed by Claude and logged with a reason</li>
           </ul>
         </div>
+        <SafetyFigures />
       </section>
+
+      <BuiltOnMezo />
 
       <section className="lessons">
         <div className="section-head row">
@@ -286,6 +301,8 @@ export default function Landing() {
         </div>
       </section>
 
+      <Faq />
+
       <section className="roadmap" id="roadmap">
         <div className="section-head center">
           <Tag>Wave 2 and after</Tag>
@@ -303,7 +320,10 @@ export default function Landing() {
         <div className="footer-top">
           <div>
             <p className="footer-lead">Deposit MUSD. Help hold it at $1.</p>
-            <CtaLink href="/app" light>Launch app</CtaLink>
+            <div className="footer-ctas">
+              <CtaLink href="/app" light>Launch app</CtaLink>
+              <MezoBadge dark />
+            </div>
           </div>
           <nav aria-label="Footer">
             <a href="/app">App</a>
@@ -320,4 +340,9 @@ export default function Landing() {
       </footer>
     </div>
   );
+}
+
+function PartFigure({ index }: { index: number }) {
+  const Figure = PART_FIGURES[index];
+  return <Figure key={index} play intensity={0.6} className="hairline-fig part-fig" label={`Animated figure for ${PARTS[index].name}`} />;
 }

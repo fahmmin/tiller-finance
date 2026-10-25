@@ -20,6 +20,26 @@ export function Tag({ children, dark = false }: { children: ReactNode; dark?: bo
   return <span className={`tag ${dark ? "dark" : ""}`}><i />{children}<i /></span>;
 }
 
+/** "Built on Mezo" badge with Mezo's official mark (brand kit: mezo.org/docs/users/resources/brand-kit). */
+export function MezoBadge({ dark = false }: { dark?: boolean }) {
+  return (
+    <a className={`mezo-badge ${dark ? "dark" : ""}`} href="https://mezo.org" target="_blank" rel="noreferrer">
+      <span>Built on</span>
+      <img src={dark ? "/brand/mezo-logo-dark.svg" : "/brand/mezo-logo-light.svg"} alt="Mezo" />
+    </a>
+  );
+}
+
+/** A plain-English definition on hover or keyboard focus, for terms a newcomer won't know. */
+export function Term({ children, tip }: { children: ReactNode; tip: string }) {
+  return (
+    <span className="term" tabIndex={0} role="note" aria-label={`${children}: ${tip}`}>
+      {children}
+      <span className="term-tip" aria-hidden="true">{tip}</span>
+    </span>
+  );
+}
+
 export function Arrow() {
   return (
     <svg viewBox="0 0 16 16" aria-hidden="true">

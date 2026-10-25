@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@lucasmarkes/hairline": "^0.5.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "viem": "^2.57.11"

@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import Landing from "./Landing";
 import "./styles.css";
+import "./explainers.css";
 
 // Two pages: the landing page at / and the vault app at /app.
 const Page = location.pathname.startsWith("/app") ? App : Landing;
