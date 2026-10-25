@@ -1,0 +1,13 @@
+{
+  "TillerVault": "0xC3113D5302339F18A8C554095ECEf7D9DE3eb491",
+  "keeper": "0x99B16E4C0516C6FfC9B26036Ac360d3A14a8aC31",
+  "deployBlock": 16359651,
+  "DrillPool": "0x4f22B47d495F7AADA4f6CD8B8715648C62782440",
+  "previousVaults": [
+    {
+      "address": "0x6812ECBE0D4e40891a1561b31380745b19fd185A",
+      "deployBlock": 16359610,
+      "note": "v2: first live peg trade; Stability Pool approval bug fixed in v3"
+    }
+  ]
+}
