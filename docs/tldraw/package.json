@@ -1,0 +1,17 @@
+{
+  "name": "tldraw",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "type": "module",
+  "private": "true",
+  "dependencies": {
+    "@tldraw/store": "^5.5.2",
+    "@tldraw/tlschema": "^5.5.2",
+    "@tldraw/utils": "^5.5.2"
+  }
+}

@@ -2,3 +2,4 @@ node_modules/
 .cache-synpress/
 test-results/
 playwright-report/
+demo/

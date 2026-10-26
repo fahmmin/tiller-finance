@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "playwright test",
-    "setup": "synpress wallet-setup"
+    "test": "playwright test --project=e2e",
+    "setup": "synpress wallet-setup",
+    "demo": "playwright test --project=demo"
   },
   "keywords": [],
   "type": "module",

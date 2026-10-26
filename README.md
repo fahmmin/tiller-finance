@@ -141,6 +141,8 @@ Each run, the keeper sends Claude (Opus 5.5) a structured snapshot: BTC price, M
 
 Passed twice in a row on Oct 25, 2026. The deposit and withdrawal are on chain: [deposit](https://explorer.test.mezo.org/tx/0x3bee4d516f2e08d28b71724ded9a05ac360dfd60be88cd6fc053010a9acd4b46), [withdraw](https://explorer.test.mezo.org/tx/0xc5fc1d7c9f6df1dd1cf0ec7254eed4d8807d8287b6aba59cca57bae5af0db57e). On Windows, build the MetaMask cache with `node build-cache.mjs`, because the Synpress CLI only runs on Linux, macOS or WSL; elsewhere use `npx synpress wallet-setup`. The test wallet comes from `E2E_MNEMONIC` in `.env` (testnet only) and is funded by `contracts/scripts/fund.js`.
 
+**Demo recording** (`cd e2e && npm run demo`). This replays the pitch-video demo with real MetaMask and on-screen captions, then writes `e2e/demo/tiller-demo.mp4`. The architecture whiteboard is [docs/tldraw/tiller-architecture.tldr](docs/tldraw/tiller-architecture.tldr): open tldraw.com, then menu → File → Open. Regenerate it with `node docs/tldraw/build-board.mjs`.
+
 **Live checks on Mezo testnet:** the peg trade, the Stability Pool deposit, Claude approvals and a Claude veto, the simulate-before-send guard, and receipt checks.
 
 ---
