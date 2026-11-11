@@ -6,6 +6,7 @@ declare const __DEPLOYMENT__: {
   deployBlock?: number;
   previousVaults?: { address: `0x${string}`; deployBlock: number }[];
   keeper?: `0x${string}`;
+  Timelock?: `0x${string}`;
 };
 
 export const mezoTestnet = defineChain({
@@ -25,14 +26,20 @@ export const MUSD = "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503" as const;
 export const BTC = "0x7b7c000000000000000000000000000000000000" as const;
 export const PRICE_FEED = "0x86bCF0841622a5dAC14A313a15f96A95421b9366" as const;
 
+export const STABLE_POOL = "0x525F049A4494dA0a6c87E3C4df55f9929765Dc3e" as const;
+// v4 trades only on Mezo's own pools; the Wave 1 drill pool stays in the contracts list as history
 export const POOLS = [
   { address: "0xd16A5Df82120ED8D626a1a15232bFcE2366d6AA9" as `0x${string}`, label: "Mezo Pools MUSD/BTC" },
-  ...(__DEPLOYMENT__.DrillPool ? [{ address: __DEPLOYMENT__.DrillPool, label: "Depeg drill pool (testnet)" }] : []),
+  { address: STABLE_POOL as `0x${string}`, label: "Mezo Pools MUSD/mUSDC" },
 ];
 
 export const vaultAbi = parseAbi([
   "function totalAssets() view returns (uint256)",
   "function idleAssets() view returns (uint256)",
+  "function stableAssets() view returns (uint256)",
+  "function depositCap() view returns (uint256)",
+  "function stableCapBps() view returns (uint16)",
+  "function minPremiumBps() view returns (uint16)",
   "function pendingBtc() view returns (uint256)",
   "function totalSupply() view returns (uint256)",
   "function balanceOf(address) view returns (uint256)",
@@ -62,6 +69,7 @@ export const fmt = (x: bigint | undefined, dp = 2) =>
 
 export const KEEPER = __DEPLOYMENT__.keeper;
 export const DRILL_POOL = __DEPLOYMENT__.DrillPool;
+export const TIMELOCK = __DEPLOYMENT__.Timelock;
 
 // Mezo testnet contracts the vault calls (docs/mezo-reference.md)
 export const MEZO_CONTRACTS = [
@@ -71,4 +79,6 @@ export const MEZO_CONTRACTS = [
   { name: "Hint Helpers", address: "0x4e4cBA3779d56386ED43631b4dCD6d8EacEcBCF6" },
   { name: "Price Feed", address: PRICE_FEED },
   { name: "Mezo Pools MUSD/BTC", address: "0xd16A5Df82120ED8D626a1a15232bFcE2366d6AA9" },
+  { name: "Mezo Pools MUSD/mUSDC", address: STABLE_POOL },
+  { name: "mUSDC", address: "0xe1a26db653708A2AD8F824E92Db9852410e33A59" },
 ] as const;

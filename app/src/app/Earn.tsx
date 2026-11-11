@@ -24,7 +24,8 @@ export function Earn({ live, wallet }: PageProps) {
   const { vault } = live;
   const a = wallet.account;
   const amount = parseAmount(input);
-  const available = tab === "deposit" ? a?.musd : a?.maxWithdraw;
+  const room = vault ? (vault.cap > vault.total ? vault.cap - vault.total : 0n) : undefined;
+  const available = tab === "deposit" ? (a && room !== undefined && room < a.musd ? room : a?.musd) : a?.maxWithdraw;
   const sharePrice = vault?.sharePrice ?? 10n ** 18n;
   const shares = amount ? (amount * 10n ** 18n) / (sharePrice || 1n) : 0n;
   const needsApproval = tab === "deposit" && !!a && !!amount && a.allowance < amount;
@@ -75,7 +76,7 @@ export function Earn({ live, wallet }: PageProps) {
   else if (tab === "deposit" && vault?.paused) { label = "Deposits are paused"; disabled = true; }
   else if (amount === null) { label = "Enter a valid amount"; disabled = true; }
   else if (!amount) { label = "Enter an amount"; disabled = true; }
-  else if (available !== undefined && amount > available) { label = tab === "deposit" ? "Not enough MUSD in your wallet" : "More than you can withdraw now"; disabled = true; }
+  else if (available !== undefined && amount > available) { label = tab === "deposit" ? (room !== undefined && amount > room ? "Over the vault's deposit cap" : "Not enough MUSD in your wallet") : "More than you can withdraw now"; disabled = true; }
   else if (needsApproval) label = "Approve MUSD";
   if (busy) label = "Waiting for confirmation…";
 

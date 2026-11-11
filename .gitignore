@@ -7,3 +7,5 @@ coverage/
 dist/
 decisions.jsonl
 .wrangler/
+bot-subscribers.json
+keeper/bot.log

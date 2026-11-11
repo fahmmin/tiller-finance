@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node --test src/plan.test.ts",
     "start": "node --env-file=../.env src/keeper.ts",
-    "once": "node --env-file=../.env src/keeper.ts --once"
+    "once": "node --env-file=../.env src/keeper.ts --once",
+    "bot": "node --env-file=../.env src/bot.ts"
   },
   "keywords": [],
   "type": "module",

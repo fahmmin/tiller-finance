@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { parseAbi } from "viem";
-import { BTC, DEPLOY_BLOCK, POOLS, PREVIOUS_VAULTS, PRICE_FEED, VAULT, decisionEvent, mezoAbi, pub, vaultAbi } from "./chain";
+import { BTC, DEPLOY_BLOCK, MUSD, POOLS, PREVIOUS_VAULTS, PRICE_FEED, STABLE_POOL, VAULT, decisionEvent, mezoAbi, pub, vaultAbi } from "./chain";
 
 export type Vault = {
-  total: bigint; idle: bigint; pendingBtc: bigint; sharePrice: bigint; supply: bigint;
-  spCapBps: number; minIdleBps: number; maxSlippageBps: number; paused: boolean;
+  total: bigint; idle: bigint; stable: bigint; cap: bigint; pendingBtc: bigint; sharePrice: bigint; supply: bigint;
+  spCapBps: number; minIdleBps: number; maxSlippageBps: number; stableCapBps: number; minPremiumBps: number; paused: boolean;
 };
 export type Pool = { label: string; address: `0x${string}`; musdUsd: number };
 export type Decision = {
@@ -19,6 +19,9 @@ export const ACTION_TEXT: Record<string, string> = {
   SP_WITHDRAW: "Took MUSD out of the Stability Pool",
   HARVEST: "Sold liquidation BTC for MUSD",
   PEG_ARB: "Bought back cheap MUSD",
+  PEG_SELL: "Sold MUSD above $1 for mUSDC",
+  PEG_BUY: "Bought MUSD back with mUSDC",
+  UNWIND: "Turned mUSDC back into MUSD",
   NOTE: "Held off",
 };
 
@@ -60,15 +63,24 @@ export function useLive() {
     setBlock(latest);
     pub.readContract({ address: TROVE_MANAGER, abi: tcrAbi, functionName: "getTCR", args: [price] }).then((t) => setTcr(Number(t) / 1e18)).catch(() => {});
     setPools(await Promise.all(POOLS.map(async (p) => {
+      if (p.address === STABLE_POOL) {
+        // 1 MUSD in, fee included: dollars of mUSDC it buys
+        const usdc = await pub.readContract({ address: p.address, abi: mezoAbi, functionName: "getAmountOut", args: [10n ** 18n, MUSD] });
+        return { label: p.label, address: p.address, musdUsd: Number(usdc) / 1e6 };
+      }
       // tiny probe so shallow pools quote their mid price
       const out = await pub.readContract({ address: p.address, abi: mezoAbi, functionName: "getAmountOut", args: [10n ** 12n, BTC] });
       return { label: p.label, address: p.address, musdUsd: Number(price) / 1e18 / (Number(out) / 1e12 / 0.997) };
     })));
     if (!VAULT) return;
     const v = { address: VAULT, abi: vaultAbi } as const;
-    const [total, idle, pendingBtc, sharePrice, supply, spCapBps, minIdleBps, maxSlippageBps, paused] = await Promise.all([
+    const [total, idle, stable, cap, stableCapBps, minPremiumBps, pendingBtc, sharePrice, supply, spCapBps, minIdleBps, maxSlippageBps, paused] = await Promise.all([
       pub.readContract({ ...v, functionName: "totalAssets" }),
       pub.readContract({ ...v, functionName: "idleAssets" }),
+      pub.readContract({ ...v, functionName: "stableAssets" }),
+      pub.readContract({ ...v, functionName: "depositCap" }),
+      pub.readContract({ ...v, functionName: "stableCapBps" }),
+      pub.readContract({ ...v, functionName: "minPremiumBps" }),
       pub.readContract({ ...v, functionName: "pendingBtc" }),
       pub.readContract({ ...v, functionName: "convertToAssets", args: [10n ** 18n] }),
       pub.readContract({ ...v, functionName: "totalSupply" }),
@@ -77,7 +89,7 @@ export function useLive() {
       pub.readContract({ address: VAULT, abi: extraVaultAbi, functionName: "maxSlippageBps" }),
       pub.readContract({ ...v, functionName: "paused" }),
     ]);
-    setVault({ total, idle, pendingBtc, sharePrice, supply, spCapBps, minIdleBps, maxSlippageBps, paused });
+    setVault({ total, idle, stable, cap, stableCapBps, minPremiumBps, pendingBtc, sharePrice, supply, spCapBps, minIdleBps, maxSlippageBps, paused });
 
     const logs = await decisions(latest);
     const recent = logs.slice(0, 60);

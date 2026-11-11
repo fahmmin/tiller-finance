@@ -108,6 +108,7 @@
 .alloc-seg { display: flex; align-items: center; padding: 0 16px; color: var(--white); font: 600 20px var(--display); min-width: 64px; transition: width 0.4s ease; }
 .seg-sp { background: var(--c-sp); }
 .seg-idle { background: var(--c-idle); }
+.seg-stable { background: #c98a1b; }
 .seg-arb { background: var(--c-arb); }
 .legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
 .legend li { display: flex; gap: 12px; align-items: flex-start; }

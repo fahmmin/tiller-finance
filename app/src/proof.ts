@@ -20,3 +20,4 @@ export const PROOF = {
 };
 
 export const GITHUB = "https://github.com/fahmmin/tiller-finance";
+export const TELEGRAM = "https://t.me/tillerfinancebot";

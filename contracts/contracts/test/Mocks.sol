@@ -82,13 +82,27 @@ contract MockTroveManager {
 }
 
 contract MockHintHelpers {
-    function getRedemptionHints(uint256 a, uint256, uint256) external pure returns (address, uint256, uint256) {
-        return (address(0), 0, a);
+    uint256 public cap; // 0 = no limit; otherwise the most Mezo could redeem right now
+
+    function setCap(uint256 c) external {
+        cap = c;
+    }
+
+    function getRedemptionHints(uint256 a, uint256, uint256) external view returns (address, uint256, uint256) {
+        return (address(0), 0, cap == 0 || a < cap ? a : cap);
     }
 }
 
 contract MockSortedTroves {
     function findInsertPosition(uint256, address, address) external pure returns (address, address) {
         return (address(0), address(0));
+    }
+}
+
+contract MockStable is MockToken {
+    constructor() MockToken("mUSDC") {}
+
+    function decimals() public pure override returns (uint8) {
+        return 6;
     }
 }

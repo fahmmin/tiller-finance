@@ -14,9 +14,12 @@ export type Review = z.infer<typeof Review>;
 const SYSTEM = `You are the risk reviewer for Tiller Finance, a MUSD vault on Mezo (Bitcoin-backed stablecoin).
 The vault earns by depositing MUSD in Mezo's Stability Pool (absorbs liquidations for discounted BTC) and by peg arbitrage:
 when MUSD trades under $1 it redeems MUSD for $1 of BTC (0.75% fee) and sells that BTC back for more MUSD, pushing MUSD toward $1.
+It also defends the peg through Mezo's MUSD/mUSDC pool: above $1.005 it sells MUSD for mUSDC (capped at 30% of the vault),
+and at $1 or below it buys MUSD back with that mUSDC. mUSDC is counted at $1.
 
 A rule-based keeper proposes actions. You approve or veto the whole batch. Your veto can only make the vault do less.
-The contract already enforces: whitelisted pools, Stability Pool cap, idle buffer, oracle-checked swap prices, and that arbitrage ends with more MUSD.
+The contract already enforces: whitelisted pools, Stability Pool cap, idle buffer, mUSDC cap, oracle-checked swap prices, that arbitrage ends with more MUSD,
+that MUSD is only sold at $1.005 or more and only bought back at $1 or less, and a deposit cap. Admin changes go through a timelock.
 Veto when something looks wrong that the contract can't see: a pool price far from other pools, a sudden system-wide stress sign (TCR near 150% means Recovery Mode is close),
 a harvest selling BTC far below the oracle, or numbers that don't add up. Approve routine actions; don't veto just because you are unsure in general.
 Write the summary for depositors: what the vault is doing and why, in plain words, no jargon like "ICR" or "bps".`;
@@ -35,17 +38,25 @@ function describe(s: Snapshot, actions: Action[]) {
         total_musd: fmt(s.totalAssets, 2),
         idle_musd: fmt(s.idle, 2),
         stability_pool_musd: fmt(s.spDeposit, 2),
+        musdc_held_usd: fmt(s.stable, 2),
         unharvested_btc: fmt(s.pendingBtc, 6),
         stability_pool_cap_pct: s.spCapBps / 100,
         idle_floor_pct: s.minIdleBps / 100,
       },
-      pools: s.pools.map((p) => ({ name: p.label, musd_price_usd: p.musdUsd.toFixed(4) })),
+      pools: [
+        ...s.pools.map((p) => ({ name: p.label, musd_price_usd: p.musdUsd.toFixed(4) })),
+        { name: "Mezo Pools MUSD/mUSDC", musd_price_usd: s.stableMusdUsd.toFixed(4) },
+      ],
       proposed_actions: actions.map((a) =>
         a.kind === "HARVEST"
           ? { action: "harvest", sell_btc: fmt(s.pendingBtc, 6), expected_musd: fmt(a.expectedOut, 2) }
           : a.kind === "PEG_ARB"
             ? { action: "peg_arbitrage", redeem_musd: fmt(a.arb.musdIn, 2), expected_musd_back: fmt(a.arb.expectedOut, 2), min_profit: fmt(a.minProfit, 2) }
-            : { action: "stability_pool_deposit", musd: fmt(a.amount, 2) },
+            : a.kind === "PEG_SELL"
+              ? { action: "sell_musd_for_musdc_above_peg", sell_musd: fmt(a.trade.amountIn, 2), expected_gain_usd: fmt(a.trade.gain, 2) }
+              : a.kind === "PEG_BUY"
+                ? { action: "buy_musd_back_with_musdc", spend_musdc: (Number(a.trade.amountIn) / 1e6).toFixed(2), expected_gain_usd: fmt(a.trade.gain, 2) }
+                : { action: "stability_pool_deposit", musd: fmt(a.amount, 2) },
       ),
     },
     null,

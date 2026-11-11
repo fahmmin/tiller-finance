@@ -35,7 +35,7 @@ export function Peg({ live }: PageProps) {
             );
           })}
         </div>
-        <p className="hint">The drill pool is a Tiller-run testnet pool seeded under $1, because MUSD on Mezo testnet trades above $1.</p>
+        <p className="hint">Under the buyback line on MUSD/BTC, the vault redeems MUSD with Mezo. Above $1.005 on MUSD/mUSDC it sells MUSD for mUSDC, and it buys MUSD back there at $1 or less.</p>
       </Card>
     </>
   );

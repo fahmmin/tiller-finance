@@ -5,9 +5,12 @@ import { Card, Go, Pill, Stat, ago, pegStatus, type PageProps } from "./parts";
 export function Overview({ live, wallet }: PageProps) {
   const { vault, pools, feed } = live;
   const total = vault ? Number(vault.total) / 1e18 : undefined;
-  const idlePct = vault && vault.total > 0n ? (Number(vault.idle) / Number(vault.total)) * 100 : undefined;
+  const pct = (x: bigint) => (Number(x) / Number(vault!.total)) * 100;
+  const idlePct = vault && vault.total > 0n ? pct(vault.idle) : undefined;
+  const stablePct = vault && vault.total > 0n ? pct(vault.stable) : 0;
+  const spPct = idlePct === undefined ? 0 : 100 - idlePct - stablePct;
   const pegProfit = feed?.filter((d) => d.action === "PEG_ARB").reduce((s, d) => s + Number(d.result) / 1e18, 0);
-  const mezoPool = pools.find((p) => p.label.startsWith("Mezo"));
+  const mezoPool = pools.find((p) => p.label === "Mezo Pools MUSD/BTC");
   const status = pegStatus(mezoPool?.musdUsd);
   const a = wallet.account;
 
@@ -45,12 +48,14 @@ export function Overview({ live, wallet }: PageProps) {
         <Card title="Where the money is" action={<Go to="/app/risk" className="link">Limits →</Go>}>
           {idlePct === undefined ? <span className="skel" style={{ height: 56 }} /> : (
             <>
-              <div className="alloc small" role="img" aria-label={`Stability Pool ${(100 - idlePct).toFixed(0)}%, ready cash ${idlePct.toFixed(0)}%`}>
-                <div className="alloc-seg seg-sp" style={{ width: `${100 - idlePct}%` }}><span>{(100 - idlePct).toFixed(0)}%</span></div>
+              <div className="alloc small" role="img" aria-label={`Stability Pool ${spPct.toFixed(0)}%, mUSDC ${stablePct.toFixed(0)}%, ready cash ${idlePct.toFixed(0)}%`}>
+                {spPct > 0 && <div className="alloc-seg seg-sp" style={{ width: `${spPct}%` }}><span>{spPct.toFixed(0)}%</span></div>}
+                {stablePct > 0 && <div className="alloc-seg seg-stable" style={{ width: `${stablePct}%` }}><span>{stablePct.toFixed(0)}%</span></div>}
                 <div className="alloc-seg seg-idle" style={{ width: `${idlePct}%` }}><span>{idlePct.toFixed(0)}%</span></div>
               </div>
               <ul className="legend compact">
-                <li><i className="seg-sp" /><div><strong>Stability Pool · {fmt(vault!.total - vault!.idle)} MUSD</strong><span>Earns when Mezo closes risky loans</span></div></li>
+                <li><i className="seg-sp" /><div><strong>Stability Pool · {fmt(vault!.total - vault!.idle - vault!.stable)} MUSD</strong><span>Earns when Mezo closes risky loans</span></div></li>
+                <li><i className="seg-stable" /><div><strong>mUSDC · ${fmt(vault!.stable)}</strong><span>Held after selling MUSD above $1, to buy it back at $1 or less</span></div></li>
                 <li><i className="seg-idle" /><div><strong>Ready cash · {fmt(vault!.idle)} MUSD</strong><span>Instant withdrawals and peg trades</span></div></li>
               </ul>
             </>

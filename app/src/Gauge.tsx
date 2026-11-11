@@ -1,11 +1,11 @@
 import { ARB_LINE, type Pool } from "./live";
 
-const MIN = 0.94, MAX = 1.06;
+const MIN = 0.8, MAX = 1.05;
 const x = (p: number) => ((Math.min(MAX, Math.max(MIN, p)) - MIN) / (MAX - MIN)) * 1000;
 
 /** MUSD price per pool against the $1 line, with the zone where buying MUSD back pays. */
 export function PegGauge({ pools }: { pools: Pool[] }) {
-  const ticks = [0.94, 0.96, 0.98, 1, 1.02, 1.04, 1.06];
+  const ticks = [0.8, 0.85, 0.9, 0.95, 1, 1.05];
   return (
     <svg className="gauge" viewBox="0 0 1000 200" role="img"
       aria-label={pools.map((p) => `${p.label}: $${p.musdUsd.toFixed(4)}`).join("; ") || "Loading prices"}>
@@ -23,7 +23,8 @@ export function PegGauge({ pools }: { pools: Pool[] }) {
       {pools.map((p, i) => {
         const cx = x(p.musdUsd);
         const y = 74 + i * 38;
-        const right = cx > 760;
+        // label on the left once it would run into the buyback line
+        const right = cx > x(ARB_LINE) - 380;
         return (
           <g key={p.label} className={p.musdUsd < 1 ? "buoy below" : "buoy above"}>
             <line x1={cx} x2={cx} y1={y} y2="142" className="mooring" />

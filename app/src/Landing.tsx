@@ -2,7 +2,7 @@ import { useState } from "react";
 import { EXPLORER, VAULT, fmt } from "./chain";
 import { PegGauge } from "./Gauge";
 import { useLive } from "./live";
-import { GITHUB, PROOF } from "./proof";
+import { GITHUB, PROOF, TELEGRAM } from "./proof";
 import { Relay } from "@lucasmarkes/hairline/react";
 import { BuiltOnMezo, Faq, FollowThousand, MusdBasics, PART_FIGURES, SafetyFigures, YieldEngines } from "./Explainers";
 import { CtaLink, Logo, MezoBadge, Tag } from "./ui";
@@ -61,7 +61,7 @@ const LESSONS = [
 export default function Landing() {
   const { vault, pools } = useLive();
   const [open, setOpen] = useState(0);
-  const live = pools.find((p) => p.label.startsWith("Mezo"));
+  const live = pools.find((p) => p.label === "Mezo Pools MUSD/BTC");
 
   return (
     <div className="site">
@@ -73,6 +73,7 @@ export default function Landing() {
           <a href="#proof">Proof</a>
           <a href="#faq">FAQ</a>
           <a href={GITHUB} target="_blank" rel="noreferrer">GitHub</a>
+          <a href={TELEGRAM} target="_blank" rel="noreferrer">Telegram</a>
         </nav>
         <CtaLink href="/app">Launch app</CtaLink>
       </header>
@@ -172,7 +173,7 @@ export default function Landing() {
           <PegGauge pools={pools} />
           <p className="small muted">
             {live ? `Mezo's MUSD/BTC pool prices MUSD at $${live.musdUsd.toFixed(4)} right now. ` : ""}
-            The drill pool is seeded under $1 on purpose, to rehearse a depeg.
+            Below the buyback line, the vault buys MUSD back on Mezo's own pool.
           </p>
         </article>
         <article className="card teal stat-card">

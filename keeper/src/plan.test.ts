@@ -6,7 +6,8 @@ const e = (n: number) => BigInt(Math.round(n * 1e6)) * 10n ** 12n;
 const base: Snapshot = {
   btcUsd: 80_000, tcr: 2, paused: false,
   totalAssets: e(10_000), idle: e(10_000), spDeposit: 0n, pendingBtc: 0n,
-  spCapBps: 8_000, minIdleBps: 1_000, pools: [], arbs: [],
+  stable: 0n, stableMusdUsd: 1,
+  spCapBps: 8_000, minIdleBps: 1_000, pools: [], arbs: [], stableTrades: [],
 };
 const pool = { address: "0x01" as const, label: "p", musdUsd: 0.98, harvestOut: e(100) };
 
@@ -39,4 +40,24 @@ test("picks the most profitable arb and skips unprofitable ones", () => {
   assert.equal(acts.length, 1);
   assert.equal(acts[0].kind === "PEG_ARB" && acts[0].arb.musdIn, e(2_000));
   assert.equal(acts[0].kind === "PEG_ARB" && acts[0].minProfit, e(7.5));
+});
+
+test("defends the peg through mUSDC when there's no redemption trade, and skips the Stability Pool that round", () => {
+  const stableTrades = [
+    { kind: "PEG_SELL" as const, pool: "0x03" as const, amountIn: e(1_000), gain: e(12) },
+    { kind: "PEG_SELL" as const, pool: "0x03" as const, amountIn: e(500), gain: e(7) },
+    { kind: "PEG_BUY" as const, pool: "0x03" as const, amountIn: 100n * 10n ** 6n, gain: e(0.1) },
+  ];
+  const acts = plan({ ...base, stableTrades });
+  assert.equal(acts.length, 1);
+  assert.equal(acts[0].kind === "PEG_SELL" && acts[0].trade.amountIn, e(1_000));
+});
+
+test("prefers a redemption trade over a stablecoin trade", () => {
+  const acts = plan({
+    ...base,
+    arbs: [{ pool: "0x01" as const, musdIn: e(1_000), expectedOut: e(1_010) }],
+    stableTrades: [{ kind: "PEG_BUY" as const, pool: "0x03" as const, amountIn: 10n ** 9n, gain: e(50) }],
+  });
+  assert.deepEqual(acts.map((a) => a.kind), ["PEG_ARB"]);
 });

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { EXPLORER, fmt, mezoTestnet } from "../chain";
 import { useLive } from "../live";
-import { GITHUB } from "../proof";
+import { GITHUB, TELEGRAM } from "../proof";
 import { Logo } from "../ui";
 import { Activity } from "./Activity";
 import { Earn } from "./Earn";
@@ -62,6 +62,7 @@ function Shell() {
           </div>
           <a href="/" className="side-link">About Tiller</a>
           <a href={GITHUB} target="_blank" rel="noreferrer" className="side-link">GitHub</a>
+          <a href={TELEGRAM} target="_blank" rel="noreferrer" className="side-link">Telegram bot</a>
         </div>
       </aside>
 
