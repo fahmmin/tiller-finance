@@ -22,7 +22,14 @@ const vaultEvents = [
   parseAbiItem("event Withdraw(address indexed sender, address indexed receiver, address indexed owner, uint256 assets, uint256 shares)"),
   parseAbiItem("event Decision(bytes32 indexed action, uint256 amount, uint256 result, string why)"),
 ];
-const faucetAbi = parseAbi(["function drip(address to)", "function claims() view returns (uint256)", "function claimed(address) view returns (bool)"]);
+const faucetAbi = parseAbi([
+  "function drip(address to)",
+  "function claims() view returns (uint256)",
+  "function claimed(address) view returns (bool)",
+  "error Empty()",
+  "error AlreadyClaimed()",
+  "error NotOperator()",
+]);
 const ZERO = "0x0000000000000000000000000000000000000000";
 const n18 = (x: bigint) => Number(x) / 1e18;
 const json = (body: unknown, status = 200) =>
@@ -174,7 +181,12 @@ async function faucet(req: Request, env: Env) {
     return json({ ok: true, tx, musd: 100, btc: 0.00002 });
   } catch (e) {
     const msg = (e as { shortMessage?: string }).shortMessage ?? (e as Error).message;
-    return json({ ok: false, error: /Empty/.test(msg) ? "The faucet is empty right now. We're refilling it." : msg.split("\n")[0] }, 500);
+    // the revert reason (Empty(), AlreadyClaimed()) is in the full message, not the short one
+    const full = (e as Error).message;
+    const error = /Empty\(\)/.test(full)
+      ? "The faucet is empty right now. We're refilling it."
+      : /AlreadyClaimed\(\)/.test(full) ? "This wallet already got its test MUSD." : msg.split("\n")[0];
+    return json({ ok: false, error }, 500);
   }
 }
 
