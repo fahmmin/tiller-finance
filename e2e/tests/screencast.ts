@@ -12,11 +12,18 @@ export async function startScreencast(page: Page, framesDir: string) {
   // Steady screenshots rather than CDP's screencast, which only sends frames when Chrome sees "damage"
   // and skipped overlay changes like captions.
   let recording = true;
+  let paused = false;
+  let cut = 0; // seconds removed while paused, so waits for MetaMask and blocks don't show as frozen frames
+  let pausedAt = 0;
   const loop = (async () => {
     while (recording) {
+      if (paused) {
+        await new Promise((r) => setTimeout(r, 120));
+        continue;
+      }
       // absolute: ffmpeg resolves concat-list paths relative to the list file
       const file = path.resolve(framesDir, `f${String(frames.length).padStart(5, "0")}.jpg`);
-      const t = Date.now() / 1000;
+      const t = Date.now() / 1000 - cut;
       const ok = await page.screenshot({ path: file, type: "jpeg", quality: 85 }).then(() => true, () => false);
       if (ok) frames.push({ file, t });
       await new Promise((r) => setTimeout(r, 120)); // ~5 frames a second
@@ -24,7 +31,7 @@ export async function startScreencast(page: Page, framesDir: string) {
   })();
 
   /** Stops recording and writes an MP4 where each frame lasts as long as it was on screen. */
-  return async function stop(outFile: string) {
+  async function stop(outFile: string) {
     recording = false;
     await loop;
     if (frames.length < 2) throw new Error("screencast captured no frames");
@@ -38,7 +45,16 @@ export async function startScreencast(page: Page, framesDir: string) {
     execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", listFile,
       "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p", "-r", "30", "-c:v", "libx264", "-crf", "20", outFile]);
     return frames.length;
+  }
+  const pause = () => {
+    paused = true;
+    pausedAt = Date.now() / 1000;
   };
+  const resume = () => {
+    if (paused) cut += Date.now() / 1000 - pausedAt;
+    paused = false;
+  };
+  return Object.assign(stop, { pause, resume });
 }
 
 /** A caption bar along the bottom of the page. Re-added after full page loads. */

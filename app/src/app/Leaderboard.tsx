@@ -19,6 +19,8 @@ export function Leaderboard({ wallet }: PageProps) {
               <p>Connect a wallet to see your rank and get a card to share.</p>
               <button className="abtn" onClick={() => wallet.connect().catch(() => {})}>Connect wallet</button>
             </div>
+          ) : !stats ? (
+            <span className="skel" style={{ height: 120 }} />
           ) : myIndex < 0 ? (
             <div className="empty-state">
               <p>You're not on the board yet. Deposit any amount of MUSD to join the Peg Defenders.</p>

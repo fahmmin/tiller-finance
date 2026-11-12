@@ -13,6 +13,9 @@ export default defineConfig({
   workers: 1,
   retries: 0,
   reporter: [["list"], ["html", { open: "never" }]],
-  use: { baseURL: "http://localhost:5173", trace: "retain-on-failure", screenshot: "only-on-failure", video: "retain-on-failure" },
-  webServer: { command: "npm --prefix ../app run dev -- --port 5173 --strictPort", url: "http://localhost:5173", reuseExistingServer: true, timeout: 60_000 },
+  // BASE_URL=https://tillerfinance.xyz tests the live site, including its /api Worker; without it, a local dev server
+  use: { baseURL: process.env.BASE_URL ?? "http://localhost:5173", trace: "retain-on-failure", screenshot: "only-on-failure", video: "retain-on-failure" },
+  webServer: process.env.BASE_URL
+    ? undefined
+    : { command: "npm --prefix ../app run dev -- --port 5173 --strictPort", url: "http://localhost:5173", reuseExistingServer: true, timeout: 60_000 },
 });

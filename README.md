@@ -270,6 +270,9 @@ MUSD's $1 floor holds only if someone actually runs the redemption trade. That t
 - **Gas estimates.** Estimating without the sender address came in too low; the keeper now estimates from the keeper address.
 - **No depeg on testnet.** Testnet MUSD trades at about $1.02, so we seeded a clearly labelled drill pool at $0.95 to run the full loop against Mezo's real redemption.
 - **End-to-end testing on Windows.** The Synpress CLI doesn't run on Windows, so we built the MetaMask cache with our own script and clicked MetaMask 13 popups by label.
+- **A rounding bug only randomness found (Wave 2).** The invariant test showed `maxRedeem` rounding 1 wei short, so the last depositor couldn't redeem every share. Fixed before deploy.
+- **Testnet onboarding (Wave 2).** A new user needed a trove and 1,800 MUSD of debt before they could try the vault. The faucet now sends 100 test MUSD plus gas, so a wallet with no BTC can start.
+- **A slow RPC behind public stats (Wave 2).** Reading every event per request took seconds and sometimes hung. Stats are now served stale-while-revalidate from Workers KV and stay warm from the cron.
 
 ### Technologies I used
 
@@ -283,6 +286,8 @@ Solidity 0.8.28, OpenZeppelin 5.1 (ERC-4626, AccessControl, Pausable), Hardhat, 
 4. Built the keeper: read the chain, plan with fixed rules, get Claude's review (it fails closed), simulate, send, and check the receipt.
 5. Built the landing page and the multi-page vault app, and deployed them to Cloudflare at tillerfinance.xyz.
 6. Added an end-to-end test that deposits and withdraws with real MetaMask on Mezo testnet.
+7. Wave 2: rebuilt the vault as v4 (two-way peg defence through mUSDC, multi-trove redemptions, a deposit cap and a timelock admin), and added a randomised invariant test.
+8. Wave 2: moved the keeper and a Telegram bot onto a Cloudflare Worker cron, and added a testnet faucet, a public stats page and the Peg Defenders leaderboard.
 
 ### What we learned
 
@@ -311,7 +316,7 @@ Solidity 0.8.28, OpenZeppelin 5.1 (ERC-4626, AccessControl, Pausable), Hardhat, 
 | Field | Value |
 |---|---|
 | Deliverable URL | https://github.com/fahmmin/tiller-finance |
-| Video | [YouTube link: add after upload] |
+| Video | https://youtu.be/rTYEYR9QF_s |
 | Live demo | https://tillerfinance.xyz (vault app: https://tillerfinance.xyz/app) |
 | Built with | Mezo, MUSD, Bitcoin, Claude |
 | Product category | DeFi, Stablecoin, Yield Vault |

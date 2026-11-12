@@ -50,8 +50,27 @@ test("depositor can connect, deposit and withdraw MUSD", async ({ context, page 
   await expect(action).toHaveText("Deposit 1 MUSD");
   await action.click();
   await approveInMetaMask(context, /^Confirm$/);
-  await expect(page.locator(".toast.success")).toContainText("Deposited 1 MUSD");
+  // the app clears the amount only after a confirmed receipt; its toast can close before a slow check sees it
+  await expect(input).toHaveValue("", { timeout: 90_000 });
   await expect.poll(() => balance(page)).toBeCloseTo(before - 1, 2);
+
+  // the faucet answers with a toast either way: a drip, or a clear reason (already claimed, empty, not configured)
+  if (process.env.BASE_URL) {
+    await page.getByRole("button", { name: "Get 100 test MUSD + gas" }).click();
+    const faucet = page.locator(".toast.success, .toast.error").last();
+    await expect(faucet).toBeVisible();
+    console.log("faucet:", (await faucet.innerText()).replace(/\s+/g, " "));
+
+    // the deposit puts this wallet on the Peg Defenders board (stats are cached for up to a minute)
+    await page.locator(".side").getByRole("link", { name: "Peg Defenders" }).click();
+    await expect(async () => {
+      await page.reload();
+      await expect(page.locator(".lb .tr.me")).toBeVisible({ timeout: 30_000 });
+    }).toPass({ timeout: 150_000 });
+    await expect(page.locator(".dcard-rank")).toContainText("#");
+    await expect(page.getByRole("link", { name: /Share on X/ })).toHaveAttribute("href", /x\.com\/intent\/post/);
+    await page.locator(".side").getByRole("link", { name: "Earn" }).click();
+  }
 
   // withdraw the same 1 MUSD
   await page.getByRole("tab", { name: "Withdraw" }).click();
@@ -60,7 +79,7 @@ test("depositor can connect, deposit and withdraw MUSD", async ({ context, page 
   await expect(action).toHaveText("Withdraw 1 MUSD");
   await action.click();
   await approveInMetaMask(context, /^Confirm$/);
-  await expect(page.locator(".toast.success")).toContainText("Withdrew 1 MUSD");
+  await expect(input).toHaveValue("", { timeout: 90_000 });
   await page.getByRole("tab", { name: "Deposit" }).click();
   await expect.poll(() => balance(page)).toBeCloseTo(before, 2);
 
@@ -74,4 +93,13 @@ test("depositor can connect, deposit and withdraw MUSD", async ({ context, page 
   await expect(page.locator(".tr .pool-name").first()).toBeVisible();
   await page.locator(".side").getByRole("link", { name: "Risk & contracts" }).click();
   await expect(page.locator(".rule-value").first()).toHaveText("80%");
+  await expect(page.locator(".rules")).toContainText("Deposit cap");
+});
+
+test("public stats page shows live numbers", async ({ page }) => {
+  test.skip(!process.env.BASE_URL, "needs the /api Worker");
+  await page.goto("/stats");
+  await expect(page.locator(".sp-tile strong").first()).toHaveText(/^\d/);
+  await expect(page.locator(".sp-error")).toHaveCount(0);
+  await expect(page.locator(".tvl-chart svg")).toBeVisible();
 });

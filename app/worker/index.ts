@@ -139,19 +139,23 @@ async function stats(env: Env) {
   };
 }
 
-async function cachedStats(req: Request, env: Env, ctx: Ctx) {
-  const cache = (caches as unknown as { default: Cache }).default;
-  const key = new Request(new URL("/api/stats", req.url).toString());
-  const hit = await cache.match(key);
-  if (hit) return hit;
-  const res = json(await stats(env));
-  res.headers.set("cache-control", `public, max-age=${STATS_TTL}`);
-  ctx.waitUntil(cache.put(key, res.clone()));
-  return res;
+const refreshStats = async (env: Env) => env.TILLER.put("stats", JSON.stringify(await stats(env)));
+
+/** Stale-while-revalidate from KV: the answer is instant even when Mezo's RPC is slow, and never older than a minute or so. */
+async function cachedStats(env: Env, ctx: Ctx) {
+  const saved = await env.TILLER.get("stats");
+  if (!saved) {
+    await refreshStats(env);
+    return json(JSON.parse((await env.TILLER.get("stats"))!));
+  }
+  if (Date.now() - (JSON.parse(saved) as { updatedAt: number }).updatedAt > STATS_TTL * 1000) {
+    ctx.waitUntil(refreshStats(env).catch((e) => console.error("stats refresh:", e)));
+  }
+  return json(JSON.parse(saved));
 }
 
 async function faucet(req: Request, env: Env) {
-  if (!FAUCET) return json({ ok: false, error: "Faucet not deployed" }, 503);
+  if (!FAUCET || !process.env.KEEPER_KEY) return json({ ok: false, error: "The faucet is being set up. Try again in a few minutes." }, 503);
   const { address } = (await req.json().catch(() => ({}))) as { address?: string };
   if (!address || !isAddress(address)) return json({ ok: false, error: "Send a valid wallet address" }, 400);
   // one claim per wallet is enforced on-chain; one per IP per day here keeps a single person from draining it
@@ -193,7 +197,7 @@ export default {
   async fetch(req: Request, env: Env, ctx: Ctx) {
     const { pathname } = new URL(req.url);
     try {
-      if (pathname === "/api/stats" && req.method === "GET") return await cachedStats(req, env, ctx);
+      if (pathname === "/api/stats" && req.method === "GET") return await cachedStats(env, ctx);
       if (pathname === "/api/faucet" && req.method === "POST") return await faucet(req, env);
       if (pathname === "/api/telegram" && req.method === "POST") return await telegram(req, env, ctx);
       if (pathname.startsWith("/api/")) return json({ error: "not found" }, 404);
@@ -206,6 +210,7 @@ export default {
   async scheduled(_event: unknown, env: Env, ctx: Ctx) {
     ctx.waitUntil(
       (async () => {
+        await refreshStats(env).catch((e) => console.error("stats refresh:", e));
         await tick().catch((e) => console.error("keeper tick failed:", e));
         const from = BigInt((await env.TILLER.get("alert:next")) ?? (await pub.getBlockNumber()).toString());
         const next = await alert(from, kvSubs(env.TILLER));
