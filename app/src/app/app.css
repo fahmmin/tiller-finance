@@ -239,7 +239,7 @@
   .topbar { padding: 12px 16px; }
   .banner { margin: 12px 16px 0; }
   .page { padding: 16px 16px 96px; }
-  .tabbar { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--card); border-top: 1px solid var(--border); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); }
+  .tabbar { display: grid; grid-template-columns: repeat(6, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--card); border-top: 1px solid var(--border); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); }
   .tabbar a { display: grid; justify-items: center; gap: 2px; padding: 6px 0; text-decoration: none; color: var(--ink-2); font: 500 11px var(--display); }
   .tabbar svg { width: 22px; height: 22px; }
   .tabbar a.active { color: var(--ink); }
@@ -250,3 +250,63 @@
   .stat-value { font-size: 22px; }
 }
 .stat .pill { white-space: normal; max-width: 100%; }
+
+/* ---------- faucet ---------- */
+.faucet { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-radius: 14px; background: #f3fbe9; border: 1px solid #d9f2c2; font-size: 13px; flex-wrap: wrap; }
+.faucet div { display: grid; gap: 2px; }
+.faucet span { color: var(--ink-2); }
+
+/* ---------- leaderboard ---------- */
+.lb-top { margin-bottom: 16px; }
+.table.lb .tr { grid-template-columns: 40px 2fr 1.2fr 1fr 1fr; }
+.table.lb .tr.me { background: #f3fbe9; border-radius: 12px; }
+.rank { font: 600 15px var(--display); color: var(--ink-2); }
+.you { margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: var(--ink); color: var(--lime); font: 600 11px var(--label); }
+.defender { display: grid; gap: 14px; }
+.dcard { position: relative; overflow: hidden; display: grid; gap: 8px; padding: 22px; border-radius: 20px; color: var(--white);
+  background: radial-gradient(120% 90% at 100% 0%, rgba(158, 252, 101, 0.28), transparent 55%), #0f2e26; }
+.dcard-top { display: flex; justify-content: space-between; align-items: center; }
+.dcard-top img { height: 16px; }
+.dcard-brand { font: 700 18px var(--display); letter-spacing: -0.02em; }
+.dcard-kicker { margin-top: 10px; font: 500 12px var(--label); text-transform: uppercase; letter-spacing: 0.12em; color: var(--lime); }
+.dcard-rank { font: 700 64px/1 var(--display); letter-spacing: -0.04em; }
+.dcard-rank small { font-size: 18px; font-weight: 500; color: #b9cbc2; letter-spacing: 0; }
+.dcard-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 6px; }
+.dcard-stats span { display: block; font: 500 12px var(--label); color: #b9cbc2; }
+.dcard-stats strong { font: 600 22px var(--display); }
+.dcard-stats small { font-size: 13px; color: #b9cbc2; }
+.dcard-addr { font-size: 12px; color: #b9cbc2; }
+@media (max-width: 720px) { .table.lb .tr { grid-template-columns: 28px 1.6fr 1fr; } .table.lb .tr > :nth-child(4), .table.lb .tr > :nth-child(5) { display: none; } }
+
+/* ---------- public stats page ---------- */
+.stats-page { --bg: #f4f5f5; --border: #e6e8e8; padding-bottom: 48px; }
+.sp-head, .sp-tiles, .sp-chart, .sp-foot { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
+.sp-head { padding: 48px 0 24px; }
+.sp-head h1 { font: 700 clamp(40px, 7vw, 72px)/1 var(--display); letter-spacing: -0.04em; }
+.sp-head p { margin-top: 12px; color: var(--ink-2); }
+.sp-head a { color: var(--ink); }
+.sp-error { color: #a33b00 !important; }
+.sp-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.sp-tile { display: grid; gap: 6px; padding: 20px; border-radius: 18px; background: var(--bg); border: 1px solid var(--border); }
+.sp-tile span { font: 500 13px var(--label); color: var(--ink-2); }
+.sp-tile strong { font: 700 36px/1.05 var(--display); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.sp-tile small { font-size: 13px; color: var(--ink-2); min-height: 1em; }
+.sp-tile .skel { height: 38px; width: 70%; }
+.sp-chart { margin-top: 28px; padding: 24px; border-radius: 20px; border: 1px solid var(--border); }
+.sp-chart h2 { font: 600 20px var(--display); }
+.sp-foot { margin-top: 28px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; color: var(--ink-2); font-size: 14px; }
+.tvl-chart { position: relative; margin-top: 14px; }
+.tvl-chart svg { width: 100%; height: auto; display: block; }
+.tvl-chart .grid { stroke: var(--border); stroke-width: 1; }
+.tvl-chart .axis-label { font: 500 12px var(--label); fill: var(--ink-2); }
+.tvl-chart .line { fill: none; stroke: #1f8a70; stroke-width: 2; stroke-linejoin: round; }
+.tvl-chart .area { fill: #1f8a70; opacity: 0.08; }
+.tvl-chart .cross { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 3 3; }
+.tvl-chart .dot { fill: #1f8a70; stroke: var(--white); stroke-width: 2; }
+.tvl-chart .tip { position: absolute; top: 0; transform: translateX(-50%); display: grid; gap: 2px; padding: 8px 10px; border-radius: 10px; background: var(--ink); color: var(--white); font-size: 12px; pointer-events: none; white-space: nowrap; }
+.tvl-table { margin-top: 12px; font-size: 13px; color: var(--ink-2); }
+.tvl-table table { margin-top: 8px; border-collapse: collapse; }
+.tvl-table td, .tvl-table th { padding: 4px 16px 4px 0; text-align: left; }
+.hero-faucet { margin-top: 14px; font-size: 15px; }
+.hero-faucet a { color: inherit; font-weight: 600; }
+@media (max-width: 860px) { .sp-tiles { grid-template-columns: repeat(2, 1fr); } }

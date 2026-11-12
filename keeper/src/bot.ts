@@ -1,15 +1,11 @@
 // Tiller Telegram bot: "why did my vault do that?" answered from the on-chain decision log, plus an alert for every move.
-// node --env-file=../.env src/bot.ts      (TELEGRAM_BOT_TOKEN from @BotFather; KEEPER_KEY not needed)
-import fs from "node:fs";
+// Runs on Cloudflare (app/worker: webhook + cron). Locally: node --env-file=../.env src/bot.ts (long polling; delete the webhook first).
 import Anthropic from "@anthropic-ai/sdk";
 import { hexToString, parseAbiItem } from "viem";
 import { A, DEPLOY_BLOCK, VAULT, mezoRead, pub, vaultRead } from "./chain.ts";
 import { fmt } from "./plan.ts";
 
-const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const API = `https://api.telegram.org/bot${TOKEN}`;
 const EXPLORER = "https://explorer.test.mezo.org";
-const SUBS_FILE = "bot-subscribers.json";
 const LOG_SPAN = 9_999n; // Mezo's RPC caps a log query at 10,000 blocks
 const E18 = 10n ** 18n;
 
@@ -28,18 +24,18 @@ export const ACTION_TEXT: Record<string, string> = {
 
 type Decision = { action: string; amount: bigint; result: bigint; why: string; tx: string; block: bigint };
 
-const subs = new Set<number>(fs.existsSync(SUBS_FILE) ? JSON.parse(fs.readFileSync(SUBS_FILE, "utf8")) : []);
-const saveSubs = () => fs.writeFileSync(SUBS_FILE, JSON.stringify([...subs]));
+/** Where alert subscribers live: a JSON file locally, Workers KV on Cloudflare. */
+export type SubStore = { list(): Promise<number[]>; set(chatId: number, on: boolean): Promise<void>; seen(chatId: number): Promise<void> };
 
-async function tg(method: string, body: object) {
-  const res = await fetch(`${API}/${method}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+export async function tg(method: string, body: object) {
+  const res = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/${method}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
   const json = (await res.json()) as { ok: boolean; result: any; description?: string };
   if (!json.ok) throw new Error(`telegram ${method}: ${json.description}`);
   return json.result;
 }
-const send = (chat_id: number, text: string) => tg("sendMessage", { chat_id, text, link_preview_options: { is_disabled: true } });
+export const send = (chat_id: number, text: string) => tg("sendMessage", { chat_id, text, link_preview_options: { is_disabled: true } });
 
-async function decisionsBetween(fromBlock: bigint, toBlock: bigint): Promise<Decision[]> {
+export async function decisionsBetween(fromBlock: bigint, toBlock: bigint): Promise<Decision[]> {
   const out: Decision[] = [];
   for (let from = fromBlock; from <= toBlock; from += LOG_SPAN + 1n) {
     const to = from + LOG_SPAN < toBlock ? from + LOG_SPAN : toBlock;
@@ -105,7 +101,7 @@ export async function peg() {
   return [`MUSD price on Mezo Pools`, line("MUSD/BTC", btcPoolUsd), line("MUSD/mUSDC", usdcPoolUsd), `BTC: $${(Number(price) / 1e18).toFixed(0)}`].join("\n");
 }
 
-const claude = new Anthropic();
+let claude: Anthropic | undefined; // created on first question, once the API key is in the environment
 const ASK_SYSTEM = `You answer questions from depositors of Tiller Finance, a MUSD vault on Mezo (Bitcoin-backed stablecoin), in a Telegram chat.
 The vault earns from Mezo's Stability Pool and by defending MUSD's $1 peg: below $1 it redeems MUSD for $1 of BTC and sells the BTC back
 for more MUSD, or buys MUSD back with mUSDC; above $1.005 it sells MUSD for mUSDC. A rule-based keeper plans each move, a Claude review can veto it,
@@ -117,6 +113,7 @@ export async function ask(question: string) {
   const [s, recent] = await Promise.all([status(), recentDecisions(10)]);
   const context = `Vault status:\n${s}\n\nRecent decisions, newest first:\n${recent.map(describe).join("\n\n") || "none yet"}`;
   try {
+    claude ??= new Anthropic();
     const res = await claude.beta.messages.create({
       model: "claude-opus-5-5",
       max_tokens: 2000,
@@ -142,31 +139,44 @@ const HELP = `Tiller Finance bot. Ask me anything about the vault in plain words
 /peg  MUSD's price on Mezo's pools
 /alerts  get a message for every vault move (/alerts off to stop)`;
 
-async function handle(chatId: number, text: string) {
+/** Reply to one message. Returns the reply text; the caller sends it. */
+export async function handle(chatId: number, text: string, subs: SubStore): Promise<string> {
+  await subs.seen(chatId);
   const [cmd, arg] = text.trim().split(/\s+/, 2);
   switch (cmd.split("@")[0]) {
     case "/start":
     case "/help":
-      return send(chatId, HELP);
+      return HELP;
     case "/status":
-      return send(chatId, await status());
+      return status();
     case "/peg":
-      return send(chatId, await peg());
+      return peg();
     case "/why": {
       const recent = await recentDecisions(5);
-      return send(chatId, recent.length ? recent.map(describe).join("\n\n") : "No decisions yet.");
+      return recent.length ? recent.map(describe).join("\n\n") : "No decisions yet.";
     }
-    case "/alerts":
-      if (arg === "off") subs.delete(chatId);
-      else subs.add(chatId);
-      saveSubs();
-      return send(chatId, subs.has(chatId) ? "Alerts on. I'll message you every time the vault moves." : "Alerts off.");
+    case "/alerts": {
+      const on = arg !== "off";
+      await subs.set(chatId, on);
+      return on ? "Alerts on. I'll message you every time the vault moves." : "Alerts off.";
+    }
     default:
-      return send(chatId, await ask(text));
+      return ask(text);
   }
 }
 
-async function pollTelegram() {
+/** Sends every decision in (fromBlock, latest] to subscribers. Returns the block to start from next time. */
+export async function alert(fromBlock: bigint, subs: SubStore): Promise<bigint> {
+  const latest = await pub.getBlockNumber();
+  if (latest < fromBlock) return fromBlock;
+  const chats = await subs.list();
+  for (const d of await decisionsBetween(fromBlock, latest)) {
+    for (const chat of chats) await send(chat, `Vault update\n${describe(d)}`).catch((e) => console.error("alert:", e.message));
+  }
+  return latest + 1n;
+}
+
+async function pollTelegram(subs: SubStore) {
   let offset = 0;
   for (;;) {
     try {
@@ -174,7 +184,7 @@ async function pollTelegram() {
       for (const u of updates) {
         offset = u.update_id + 1;
         const m = u.message;
-        if (m?.text) await handle(m.chat.id, m.text).catch((e) => send(m.chat.id, `Something went wrong: ${(e as Error).message.split("\n")[0]}`));
+        if (m?.text) await send(m.chat.id, await handle(m.chat.id, m.text, subs).catch((e) => `Something went wrong: ${(e as Error).message.split("\n")[0]}`));
       }
     } catch (e) {
       console.error("telegram poll:", (e as Error).message);
@@ -183,26 +193,22 @@ async function pollTelegram() {
   }
 }
 
-async function watchDecisions() {
-  let next = (await pub.getBlockNumber()) + 1n;
-  for (;;) {
-    await new Promise((r) => setTimeout(r, 30_000));
-    try {
-      const latest = await pub.getBlockNumber();
-      if (latest < next) continue;
-      for (const d of await decisionsBetween(next, latest)) {
-        for (const chat of subs) await send(chat, `Vault update\n${describe(d)}`).catch((e) => console.error("alert:", e.message));
-      }
-      next = latest + 1n;
-    } catch (e) {
-      console.error("watch:", (e as Error).message);
-    }
-  }
-}
-
 if (import.meta.main) {
-  if (!TOKEN) throw new Error("set TELEGRAM_BOT_TOKEN in .env (create a bot with @BotFather)");
+  if (!process.env.TELEGRAM_BOT_TOKEN) throw new Error("set TELEGRAM_BOT_TOKEN in .env (create a bot with @BotFather)");
+  const fs = await import("node:fs");
+  const FILE = "bot-subscribers.json";
+  const ids = new Set<number>(fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, "utf8")) : []);
+  const subs: SubStore = {
+    list: async () => [...ids],
+    set: async (id, on) => {
+      on ? ids.add(id) : ids.delete(id);
+      fs.writeFileSync(FILE, JSON.stringify([...ids]));
+    },
+    seen: async () => {},
+  };
   const me = await tg("getMe", {});
-  console.log(`@${me.username} running for vault ${VAULT}; ${subs.size} alert subscribers`);
-  await Promise.all([pollTelegram(), watchDecisions()]);
+  console.log(`@${me.username} running for vault ${VAULT}`);
+  let next = (await pub.getBlockNumber()) + 1n;
+  setInterval(() => alert(next, subs).then((n) => (next = n)).catch((e) => console.error("watch:", e.message)), 30_000);
+  await pollTelegram(subs);
 }

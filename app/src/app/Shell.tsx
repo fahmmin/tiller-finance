@@ -5,6 +5,7 @@ import { GITHUB, TELEGRAM } from "../proof";
 import { Logo } from "../ui";
 import { Activity } from "./Activity";
 import { Earn } from "./Earn";
+import { Leaderboard } from "./Leaderboard";
 import { icons } from "./icons";
 import { Overview } from "./Overview";
 import { Peg } from "./Peg";
@@ -18,6 +19,7 @@ const ROUTES = [
   { path: "/app/earn", name: "Earn", icon: icons.earn, Page: Earn },
   { path: "/app/peg", name: "Peg monitor", icon: icons.peg, Page: Peg },
   { path: "/app/activity", name: "Activity", icon: icons.activity, Page: Activity },
+  { path: "/app/leaderboard", name: "Peg Defenders", tab: "Ranks", icon: icons.trophy, Page: Leaderboard },
   { path: "/app/risk", name: "Risk & contracts", icon: icons.risk, Page: Risk },
 ];
 
@@ -61,6 +63,7 @@ function Shell() {
             <span>BTC ${live.btcUsd ? live.btcUsd.toLocaleString("en-US", { maximumFractionDigits: 0 }) : "…"}</span>
           </div>
           <a href="/" className="side-link">About Tiller</a>
+          <a href="/stats" className="side-link">Live stats</a>
           <a href={GITHUB} target="_blank" rel="noreferrer" className="side-link">GitHub</a>
           <a href={TELEGRAM} target="_blank" rel="noreferrer" className="side-link">Telegram bot</a>
         </div>
@@ -94,7 +97,7 @@ function Shell() {
 
       <nav className="tabbar" aria-label="App">
         {ROUTES.map((r) => (
-          <Go key={r.path} to={r.path} className={r.path === route.path ? "active" : ""}>{r.icon}<span>{r.name.split(" ")[0]}</span></Go>
+          <Go key={r.path} to={r.path} className={r.path === route.path ? "active" : ""}>{r.icon}<span>{r.tab ?? r.name.split(" ")[0]}</span></Go>
         ))}
       </nav>
     </div>

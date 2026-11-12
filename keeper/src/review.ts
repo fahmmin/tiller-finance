@@ -65,7 +65,7 @@ function describe(s: Snapshot, actions: Action[]) {
 }
 
 /** Fails closed: any API error or refusal counts as a veto, so the AI being down never moves money. */
-export async function review(s: Snapshot, actions: Action[]): Promise<Review> {
+export async function review(s: Snapshot, actions: Action[]): Promise<Review & { offline?: true }> {
   try {
     const res = await client.messages.parse({
       model: "claude-opus-5-5",
@@ -75,10 +75,10 @@ export async function review(s: Snapshot, actions: Action[]): Promise<Review> {
       messages: [{ role: "user", content: describe(s, actions) }],
     });
     if (res.stop_reason === "refusal" || !res.parsed_output) {
-      return { approve: false, risk_level: "medium", summary: "Paused this round: the risk review gave no answer.", concerns: [res.stop_reason ?? "no output"] };
+      return { approve: false, risk_level: "medium", summary: "Paused this round: the risk review gave no answer.", concerns: [res.stop_reason ?? "no output"], offline: true };
     }
     return res.parsed_output;
   } catch (err) {
-    return { approve: false, risk_level: "medium", summary: "Paused this round: the risk review was unreachable.", concerns: [String(err)] };
+    return { approve: false, risk_level: "medium", summary: "Paused this round: the risk review was unreachable.", concerns: [String(err)], offline: true };
   }
 }

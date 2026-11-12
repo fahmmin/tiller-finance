@@ -15,5 +15,6 @@
       "note": "v3: Stability Pool deposits; replaced by v4 (two-way peg defence, deposit cap, timelock)"
     }
   ],
-  "Timelock": "0x298e022bf8caCe6C77cB8b8453C6f7DbcA85df0c"
+  "Timelock": "0x298e022bf8caCe6C77cB8b8453C6f7DbcA85df0c",
+  "TillerFaucet": "0xB7Bc0b68ef2c4319169Bf3d49018409660aA22fA"
 }

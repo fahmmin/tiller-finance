@@ -27,6 +27,9 @@ Tiller is a vault for MUSD, Mezo's Bitcoin-backed dollar. It earns by doing the 
 | **Admin** | Deployer wallet | **Timelock.** Every limit, pool or cap change waits in public first (1 hour on testnet, 48 hours on mainnet). The guardian can still pause at once, and pausing never blocks withdrawals |
 | **Tests** | 15 | **23 unit tests plus a randomised invariant test**, run at 200 seeds × 60 steps. It found a real bug: `maxRedeem` rounded 1 wei short, so the last depositor couldn't redeem every share. Fixed |
 | **Depositor updates** | Website only | **Telegram bot, [@tillerfinancebot](https://t.me/tillerfinancebot).** `/status`, `/why`, `/peg`, `/alerts`, and plain-English questions answered by Claude from the on-chain decision log |
+| **Onboarding** | Borrow 1,800 MUSD on Mezo first | **One-click faucet**: 100 test MUSD plus BTC for gas, one claim per wallet, sent by the site so a wallet with no BTC can start ([`TillerFaucet`](contracts/contracts/TillerFaucet.sol)) |
+| **Traction, in public** | None | **[tillerfinance.xyz/stats](https://tillerfinance.xyz/stats)**: depositors, deposits, value locked over time, peg trades, faucet claims and bot users, all read from Mezo testnet. **[Peg Defenders](https://tillerfinance.xyz/app/leaderboard)**: a leaderboard with a shareable defender card |
+| **Always on** | Keeper ran on a laptop | **Cloudflare Worker**: the keeper runs every 10 minutes on a cron, and the Telegram bot answers through a webhook, so nothing depends on one machine ([`app/worker`](app/worker/index.ts)) |
 | **Mainnet** | Not ready | Deploy script and config ready (`--network mezomainnet`, mainnet addresses filled in). Not deployed: the code isn't audited yet |
 
 **A real depeg on Mezo testnet (Nov 11, 2026).** Mezo's own MUSD/BTC pool priced MUSD at **$0.94**, and the MUSD/mUSDC pool at **$0.81**. The keeper simulated the vault's `pegArb` on v4 against Mezo's live contracts: redeeming all **299 MUSD** returns **+15.67 MUSD (5.2%)**, with no drill pool involved. The trade wasn't sent. The keeper's Claude API key had no credits, so the review failed closed and vetoed it, which is the behaviour we want.
@@ -133,6 +136,7 @@ Each run, the keeper sends Claude (Opus 5.5) a structured snapshot: BTC price, M
 | Contract | Address |
 |---|---|
 | TillerVault (v4, current, Wave 2) | [`0xA300F55877873D7881B1B00eacec299b3C7b8a69`](https://explorer.test.mezo.org/address/0xA300F55877873D7881B1B00eacec299b3C7b8a69) |
+| TillerFaucet (testnet onboarding) | [`0xB7Bc0b68ef2c4319169Bf3d49018409660aA22fA`](https://explorer.test.mezo.org/address/0xB7Bc0b68ef2c4319169Bf3d49018409660aA22fA) |
 | Timelock (v4 admin, 1 hour delay) | [`0x298e022bf8caCe6C77cB8b8453C6f7DbcA85df0c`](https://explorer.test.mezo.org/address/0x298e022bf8caCe6C77cB8b8453C6f7DbcA85df0c) |
 | TillerVault (v3, Stability Pool deposit) | [`0xC3113D5302339F18A8C554095ECEf7D9DE3eb491`](https://explorer.test.mezo.org/address/0xC3113D5302339F18A8C554095ECEf7D9DE3eb491) |
 | TillerVault (v2, first peg trade) | [`0x6812ECBE0D4e40891a1561b31380745b19fd185A`](https://explorer.test.mezo.org/address/0x6812ECBE0D4e40891a1561b31380745b19fd185A) |
@@ -145,7 +149,7 @@ Each run, the keeper sends Claude (Opus 5.5) a structured snapshot: BTC price, M
 
 ## Tests
 
-**Contracts, 16 unit tests + 20 invariant seeds passing** (`cd contracts && npx hardhat test`)
+**Contracts, 18 unit tests + 20 invariant seeds passing** (`cd contracts && npx hardhat test`)
 
 - counts Stability Pool deposits in `totalAssets`
 - enforces the Stability Pool cap and idle buffer
@@ -195,7 +199,7 @@ Passed twice in a row on Oct 25, 2026. The deposit and withdrawal are on chain: 
 |---|---|
 | [`contracts/`](contracts) | `TillerVault.sol`, `DrillPool.sol`, Mezo interfaces, mocks, tests, deploy/drill/deposit scripts |
 | [`keeper/`](keeper) | TypeScript keeper: snapshot, simulation-sized trades, rule planner, Claude review, executor; plus the Telegram bot (`src/bot.ts`) |
-| [`app/`](app) | Vite + React + viem site on Cloudflare: landing page, plus a multi-page vault app (Overview, Earn, Peg monitor, Activity, Risk & contracts) with wallet connect, network switching and transaction toasts |
+| [`app/`](app) | Vite + React + viem site on Cloudflare, with a Worker for `/api` (stats, faucet, Telegram webhook) and the keeper cron: landing page, public `/stats`, plus a multi-page vault app (with a Peg Defenders leaderboard) (Overview, Earn, Peg monitor, Activity, Risk & contracts) with wallet connect, network switching and transaction toasts |
 | [`e2e/`](e2e) | Synpress + Playwright end-to-end test with real MetaMask on Mezo testnet |
 | [`docs/`](docs) | [PRD](docs/PRD.md), [design](docs/superpowers/specs/2026-10-25-tiller-finance-design.md), [Mezo reference](docs/mezo-reference.md), [composability map](docs/composability.md), [competition notes](docs/competition-wave1.md) |
 

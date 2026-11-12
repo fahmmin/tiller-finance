@@ -1,12 +1,9 @@
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import deployment from "../../contracts/deployments/mezotestnet.json" with { type: "json" };
+import vaultArtifact from "../../contracts/artifacts/contracts/TillerVault.sol/TillerVault.json" with { type: "json" };
 import { createPublicClient, createWalletClient, defineChain, http, parseAbi, zeroAddress, type Abi } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import type { Action, ArbCandidate, PoolQuote, Snapshot, StableTrade } from "./plan.ts";
 
-const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
-const read = (p: string) => JSON.parse(fs.readFileSync(path.join(root, p), "utf8"));
 
 export const mezoTestnet = defineChain({
   id: 31611,
@@ -29,14 +26,14 @@ export const A = {
   MusdUsdcPool: "0x525F049A4494dA0a6c87E3C4df55f9929765Dc3e",
 } as const;
 
-const deployment = read("contracts/deployments/mezotestnet.json");
 export const VAULT = deployment.TillerVault as `0x${string}`;
 export const DEPLOY_BLOCK = BigInt(deployment.deployBlock);
-const vaultAbi = read("contracts/artifacts/contracts/TillerVault.sol/TillerVault.json").abi as Abi;
+export const FAUCET = (deployment as { TillerFaucet?: `0x${string}` }).TillerFaucet;
+export const vaultAbi = vaultArtifact.abi as Abi;
 const POOLS: { address: `0x${string}`; label: string }[] = [
   { address: A.MusdBtcPool, label: "Mezo Pools MUSD/BTC" },
   // the drill pool is only for rehearsals; v4 trades on Mezo's own pool
-  ...(process.env.DRILL_MODE === "1" && deployment.DrillPool ? [{ address: deployment.DrillPool, label: "Depeg drill pool" }] : []),
+  ...(process.env.DRILL_MODE === "1" && deployment.DrillPool ? [{ address: deployment.DrillPool as `0x${string}`, label: "Depeg drill pool" }] : []),
 ];
 
 const mezo = parseAbi([
@@ -46,9 +43,16 @@ const mezo = parseAbi([
 ]);
 
 export const pub = createPublicClient({ chain: mezoTestnet, transport: http() });
-// read-only users (the Telegram bot) run without KEEPER_KEY; only keeper actions need it
-const account = process.env.KEEPER_KEY ? privateKeyToAccount(process.env.KEEPER_KEY as `0x${string}`) : undefined!;
-const wallet = createWalletClient({ chain: mezoTestnet, transport: http(), account });
+// Built on first use: read-only users (the bot, the stats API) never need KEEPER_KEY, and on Cloudflare
+// process.env is only filled once a request or cron event arrives.
+let signer: { account: ReturnType<typeof privateKeyToAccount>; wallet: ReturnType<typeof createWalletClient> } | undefined;
+export function keeperSigner() {
+  if (!signer) {
+    const account = privateKeyToAccount(process.env.KEEPER_KEY as `0x${string}`);
+    signer = { account, wallet: createWalletClient({ chain: mezoTestnet, transport: http(), account }) };
+  }
+  return signer;
+}
 
 export const vaultRead = (functionName: string, args: unknown[] = []) =>
   pub.readContract({ address: VAULT, abi: vaultAbi, functionName, args }) as Promise<any>;
@@ -62,7 +66,7 @@ const E12 = 10n ** 12n; // mUSDC has 6 decimals
 // redemptions, cancelled partials and pool depth are all priced exactly. A revert means "skip this size".
 async function simulate(functionName: string, args: unknown[]): Promise<bigint | null> {
   try {
-    const { result } = await pub.simulateContract({ address: VAULT, abi: vaultAbi, account, functionName, args } as any);
+    const { result } = await pub.simulateContract({ address: VAULT, abi: vaultAbi, account: keeperSigner().account, functionName, args } as any);
     return result as bigint;
   } catch {
     return null;
@@ -151,7 +155,7 @@ export async function snapshot(): Promise<Snapshot> {
 // Mezo's RPC returns a far-too-low estimate when viem sends the local account's extra fields, so estimate from the
 // plain address and add 30%.
 const gasFor = async (call: { functionName: string; args: unknown[] }) =>
-  ((await pub.estimateContractGas({ address: VAULT, abi: vaultAbi, account: account.address, ...call } as any)) * 13n) / 10n;
+  ((await pub.estimateContractGas({ address: VAULT, abi: vaultAbi, account: keeperSigner().account.address, ...call } as any)) * 13n) / 10n;
 
 async function mined(hash: `0x${string}`) {
   const r = await pub.waitForTransactionReceipt({ hash });
@@ -170,15 +174,17 @@ export async function execute(action: Action, why: string): Promise<`0x${string}
           ? { functionName: action.kind === "PEG_SELL" ? "pegSell" : "pegBuy", args: [action.trade.amountIn, action.trade.pool, why280(why)] }
           : { functionName: "depositToStabilityPool", args: [action.amount, why280(why)] };
   // simulate first: if Mezo state moved and a guard would revert, nothing is sent
+  const { account, wallet } = keeperSigner();
   const { request } = await pub.simulateContract({ address: VAULT, abi: vaultAbi, account, ...call });
-  const hash = await wallet.writeContract({ ...request, gas: await gasFor(call) });
+  const hash = await wallet.writeContract({ ...request, gas: await gasFor(call) } as any);
   await mined(hash);
   return hash;
 }
 
 export async function note(why: string): Promise<`0x${string}`> {
   const call = { functionName: "note", args: [why280(why)] };
-  const hash = await wallet.writeContract({ address: VAULT, abi: vaultAbi, ...call, chain: mezoTestnet, gas: await gasFor(call) });
+  const { account, wallet } = keeperSigner();
+  const hash = await wallet.writeContract({ address: VAULT, abi: vaultAbi, ...call, account, chain: mezoTestnet, gas: await gasFor(call) } as any);
   await mined(hash);
   return hash;
 }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { formatEther, maxUint256, parseEther, type Abi } from "viem";
 import { MUSD, VAULT, erc20Abi, fmt, vaultAbi } from "../chain";
+import { claimFaucet } from "../traction";
 import { Address, Card, Go, Pill, type PageProps } from "./parts";
 import { useToast } from "./toast";
 
@@ -21,6 +22,7 @@ export function Earn({ live, wallet }: PageProps) {
   const [tab, setTab] = useState<Tab>(new URLSearchParams(location.search).get("tab") === "withdraw" ? "withdraw" : "deposit");
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [dripped, setDripped] = useState(false);
   const { vault } = live;
   const a = wallet.account;
   const amount = parseAmount(input);
@@ -65,6 +67,22 @@ export function Earn({ live, wallet }: PageProps) {
       ? await run(`Depositing ${input} MUSD`, { address: VAULT, abi: vaultAbi as Abi, functionName: "deposit", args: [amount, wallet.address] }, `Deposited ${input} MUSD`)
       : await run(`Withdrawing ${input} MUSD`, { address: VAULT, abi: vaultAbi as Abi, functionName: "withdraw", args: [amount, wallet.address, wallet.address] }, `Withdrew ${input} MUSD`);
     if (ok) setInput("");
+  }
+
+  async function faucet() {
+    if (!wallet.address) return;
+    setBusy(true);
+    const id = toast({ kind: "pending", title: "Sending you 100 test MUSD", body: "Plus a little BTC for gas. Takes a few seconds." });
+    try {
+      const r = await claimFaucet(wallet.address);
+      toast({ kind: "success", title: `Sent ${r.musd} MUSD and ${r.btc} BTC`, body: "Now deposit it below.", tx: r.tx }, id);
+      setDripped(true);
+    } catch (e) {
+      toast({ kind: "error", title: "Faucet couldn't send", body: (e as Error).message }, id);
+    } finally {
+      setBusy(false);
+      await wallet.refresh().catch(() => {});
+    }
   }
 
   // the button always says the one thing to do next
@@ -122,8 +140,11 @@ export function Earn({ live, wallet }: PageProps) {
 
         <button className="abtn wide" disabled={disabled} onClick={primary}>{label}</button>
         {tab === "withdraw" && <p className="hint">Withdrawals never pause. Large ones are pulled from the Stability Pool automatically.</p>}
-        {wallet.address && a && a.musd === 0n && tab === "deposit" && (
-          <p className="hint">No MUSD yet? Borrow test MUSD against test BTC at <a href="https://testnet.mezo.org" target="_blank" rel="noreferrer">testnet.mezo.org</a>.</p>
+        {wallet.address && tab === "deposit" && !dripped && (
+          <div className="faucet">
+            <div><strong>New to Mezo testnet?</strong><span>One free claim per wallet: 100 test MUSD plus BTC for gas.</span></div>
+            <button className="abtn ghost small" disabled={busy || wallet.wrongNetwork} onClick={faucet}>Get 100 test MUSD + gas</button>
+          </div>
         )}
       </Card>
 

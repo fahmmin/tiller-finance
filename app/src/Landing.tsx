@@ -74,6 +74,7 @@ export default function Landing() {
           <a href="#faq">FAQ</a>
           <a href={GITHUB} target="_blank" rel="noreferrer">GitHub</a>
           <a href={TELEGRAM} target="_blank" rel="noreferrer">Telegram</a>
+          <a href="/stats">Live stats</a>
         </nav>
         <CtaLink href="/app">Launch app</CtaLink>
       </header>
@@ -96,9 +97,10 @@ export default function Landing() {
         </p>
         <div className="hero-ctas">
           <CtaLink href="/app/earn">Deposit MUSD</CtaLink>
+          <CtaLink href="/app/leaderboard" ghost>Join the Peg Defenders</CtaLink>
           <CtaLink href="#yield" ghost>How does it earn?</CtaLink>
-          <CtaLink href={GITHUB} ghost>Read the code</CtaLink>
         </div>
+        <p className="hero-faucet">New to Mezo testnet? <a href="/app/earn">Get 100 test MUSD free →</a></p>
       </section>
 
       <section className="dark-block pov" id="why">
@@ -324,7 +326,7 @@ export default function Landing() {
           <div>
             <p className="footer-lead">Deposit MUSD. Help hold it at $1.</p>
             <div className="footer-ctas">
-              <CtaLink href="/app" light>Launch app</CtaLink>
+              <CtaLink href="/app/leaderboard" light>Join the Peg Defenders</CtaLink>
               <MezoBadge dark />
             </div>
           </div>
